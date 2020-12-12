@@ -331,7 +331,7 @@ function handleKeyDown(event) {
   event.preventDefault();
   }
   currentlyPressedKeys[event.key] = true;
-  if (currentlyPressedKeys["ArrowUp"] && particles.length < 50)
+  if (currentlyPressedKeys["ArrowUp"] && particles.length < 200)
   {
     manySpheres(numSpheres);
   }
@@ -368,9 +368,9 @@ function manySpheres(numSpheres) {
     positionY = (Math.random() * 6) - 3;
     positionZ = (Math.random() * 6) - 3;
     position = [positionX, positionY, 0];
-    size = Math.random() + 0.75;
+    size = Math.random() + 1;
     color = [Math.floor(Math.random() * 255), Math.floor(Math.random() * 255), Math.floor(Math.random() * 255)];
-    velocity = [(Math.random() * 2) - 1, (Math.random() * 2) - 1, 0];
+    velocity = [(Math.random()/100) - 0.005, (Math.random()/100) - 0.005, 0];
     glMatrix.vec3.normalize(velocity, velocity);
     currParticle = [position, size, velocity, color];
     particles.push(currParticle);
@@ -390,6 +390,16 @@ function clearSpheres() {
 
 //----------------------------------------------------------------------------------
 /**
+ * Change velocity for acceleration and drag
+ */
+function accelerationDrag(reflectVector) {
+  glMatrix.vec3.scale(reflectVector, reflectVector, 0.95);
+  return
+  {reflectVector;}
+}
+
+//----------------------------------------------------------------------------------
+/**
  * Set up buffer that fills in position, size, color, and velocity of spheres
  */
 function collisionDetect(i, currPos, r) {
@@ -401,72 +411,77 @@ function collisionDetect(i, currPos, r) {
   incidentVector = particles[i][2];
   var reflectVector = glMatrix.vec3.create();
   var temp = glMatrix.vec3.create();
-  if(currPosX + r >= 5) //collision with x=1 plane
+  var gravity = glMatrix.vec3.create();
+  var gravityb = glMatrix.vec3.create();
+  var bounce = glMatrix.vec3.create();
+  gravity = [0,-0.0015,0];
+  gravityb = [1,1.02,1];
+  var refVar;
+  var drag = 0.98;
+  if(currPosX + r >= 20) //collision with x=1 plane
   {
-    normalVector = [-1,0,0];
-    glMatrix.vec3.dot(reflectVector, incidentVector, normalVector);
-    glMatrix.vec3.scale(temp, normalVector, 2);
-    glMatrix.vec3.mul(reflectVector, reflectVector, temp);
-    glMatrix.vec3.sub(reflectVector, incidentVector, reflectVector);
-    glMatrix.vec3.normalize(reflectVector, reflectVector);
-    glMatrix.vec3.scale(reflectVector, reflectVector, 0.05);
-    particles[i][2] = reflectVector;
+    bounce = [-1,1,1];
+    glMatrix.vec3.mul(incidentVector, incidentVector, bounce)
+    particles[i][2] = incidentVector;
     glMatrix.vec3.add(particles[i][0], currPos, reflectVector);
   }
   else {
-    glMatrix.vec3.normalize(incidentVector, incidentVector);
-    glMatrix.vec3.scale(incidentVector, incidentVector, 0.05);
+    glMatrix.vec3.scale(incidentVector, incidentVector, drag);
+    glMatrix.vec3.add(incidentVector, incidentVector, gravity);
+    if (incidentVector[1] < 0)
+    {
+      glMatrix.vec3.mul(incidentVector, incidentVector, gravityb);
+    }
     glMatrix.vec3.add(particles[i][0], currPos, incidentVector);
   }
-  if(currPosX - r <= -5) //collision with x=-1 plane
+  if(currPosX - r <= -20) //collision with x=-1 plane
   {
-    normalVector = [1,0,0];
-    glMatrix.vec3.dot(reflectVector, incidentVector, normalVector);
-    glMatrix.vec3.scale(temp, normalVector, 2);
-    glMatrix.vec3.mul(reflectVector, reflectVector, temp);
-    glMatrix.vec3.sub(reflectVector, incidentVector, reflectVector);
-    glMatrix.vec3.normalize(reflectVector, reflectVector);
-    glMatrix.vec3.scale(reflectVector, reflectVector, 0.05);
-    particles[i][2] = reflectVector;
+    bounce = [-1,1,1];
+    glMatrix.vec3.mul(incidentVector, incidentVector, bounce)
+    particles[i][2] = incidentVector;
     glMatrix.vec3.add(particles[i][0], currPos, reflectVector);
   }
-  else {
-    glMatrix.vec3.normalize(incidentVector, incidentVector);
-    glMatrix.vec3.scale(incidentVector, incidentVector, 0.05);
+  else
+  {
+    glMatrix.vec3.scale(incidentVector, incidentVector, drag);
+    glMatrix.vec3.add(incidentVector, incidentVector, gravity);
+    if (incidentVector[1] < 0)
+    {
+      glMatrix.vec3.mul(incidentVector, incidentVector, gravityb);
+    }
     glMatrix.vec3.add(particles[i][0], currPos, incidentVector);
   }
-  if(currPosY + r >= 5) //collision with y=1 plane
+  if(currPosY + r >= 20) //collision with y=1 plane
   {
-    normalVector = [0,-1,0];
-    glMatrix.vec3.dot(reflectVector, incidentVector, normalVector);
-    glMatrix.vec3.scale(temp, normalVector, 2);
-    glMatrix.vec3.mul(reflectVector, reflectVector, temp);
-    glMatrix.vec3.sub(reflectVector, incidentVector, reflectVector);
-    glMatrix.vec3.normalize(reflectVector, reflectVector);
-    glMatrix.vec3.scale(reflectVector, reflectVector, 0.05);
-    particles[i][2] = reflectVector;
+    bounce = [1,1,-1];
+    glMatrix.vec3.mul(incidentVector, incidentVector, bounce)
+    particles[i][2] = incidentVector;
     glMatrix.vec3.add(particles[i][0], currPos, reflectVector);
   }
-  else {
-    glMatrix.vec3.normalize(incidentVector, incidentVector);
-    glMatrix.vec3.scale(incidentVector, incidentVector, 0.05);
+  else
+  {
+    glMatrix.vec3.scale(incidentVector, incidentVector, drag);
+    glMatrix.vec3.add(incidentVector, incidentVector, gravity);
+    if (incidentVector[1] < 0)
+    {
+      glMatrix.vec3.mul(incidentVector, incidentVector, gravityb);
+    }
     glMatrix.vec3.add(particles[i][0], currPos, incidentVector);
   }
-  if(currPosY - r <= -5) //collision with y=-1 plane
+  if(currPosY - r <= -20) //collision with y=-1 plane
   {
-    normalVector = [0,1,0];
-    glMatrix.vec3.dot(reflectVector, incidentVector, normalVector);
-    glMatrix.vec3.scale(temp, normalVector, 2);
-    glMatrix.vec3.mul(reflectVector, reflectVector, temp);
-    glMatrix.vec3.sub(reflectVector, incidentVector, reflectVector);
-    glMatrix.vec3.normalize(reflectVector, reflectVector);
-    glMatrix.vec3.scale(reflectVector, reflectVector, 0.05);
-    particles[i][2] = reflectVector;
+    bounce = [1,-1,1];
+    glMatrix.vec3.mul(incidentVector, incidentVector, bounce)
+    particles[i][2] = incidentVector;
     glMatrix.vec3.add(particles[i][0], currPos, reflectVector);
   }
   else {
-    glMatrix.vec3.normalize(incidentVector, incidentVector);
-    glMatrix.vec3.scale(incidentVector, incidentVector, 0.05);
+    glMatrix.vec3.scale(incidentVector, incidentVector, drag);
+    glMatrix.vec3.add(incidentVector, incidentVector, gravity);
+    if (incidentVector[1] < 0)
+    {
+      glMatrix.vec3.mul(incidentVector, incidentVector, gravityb);
+    }
     glMatrix.vec3.add(particles[i][0], currPos, incidentVector);
   }
 }
@@ -553,7 +568,6 @@ function setGouraudShader() {
   setupBuffers();
   gl.clearColor(0.0, 0.0, 0.0, 1.0);
   gl.enable(gl.DEPTH_TEST);
-  manySpheres(1);
   document.onkeydown = handleKeyDown;
   document.onkeyup = handleKeyUp;
   tick();
