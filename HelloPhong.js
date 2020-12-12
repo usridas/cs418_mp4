@@ -400,7 +400,7 @@ function accelerationDrag(reflectVector) {
 
 //----------------------------------------------------------------------------------
 /**
- * Set up buffer that fills in position, size, color, and velocity of spheres
+ * Set up gravity, drag, and collision detection
  */
 function collisionDetect(i, currPos, r) {
   var currSphere = particles[i];
